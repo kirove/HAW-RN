@@ -13,6 +13,9 @@ import pop3proxy.ServerSettings;
  * @author Tobi
  */
 public class POP3Server {
+    
+    
+    
 
     private final ServerSettings serversettings;
     private POP3ServerThread serverThread;
