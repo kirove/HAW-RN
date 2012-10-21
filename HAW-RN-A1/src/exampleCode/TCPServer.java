@@ -1,103 +1,125 @@
 package exampleCode;
 
-import java.io.*;
-
-import java.net.*;
-
 /*
  * TCPServer.java
  *
- * Version 1.0
+ * Version 2.0
  * Vorlesung Rechnernetze HAW Hamburg
  * Autor: M. H�bner (nach Kurose/Ross)
  * Zweck: TCP-Server Beispielcode:
  *        Bei Dienstanfrage einen Arbeitsthread erzeugen, der eine Anfrage bearbeitet:
  *        einen String empfangen, in Gro�buchstaben konvertieren und zur�cksenden
  */
+import java.io.*;
+import java.net.*;
 
-/* Server, der Verbindungsanfragen entgegennimmt */
 public class TCPServer {
-	public static final int SERVER_PORT = 6789;
+  /* Server, der Verbindungsanfragen entgegennimmt */
+  public static final int SERVER_PORT = 6789;
 
-	public static void main(String[] args) {
-		ServerSocket welcomeSocket;  // TCP-Server-Socketklasse
-		Socket connectionSocket;     // TCP-Standard-Socketklasse
+  public static void main(String[] args) {
+    ServerSocket welcomeSocket; // TCP-Server-Socketklasse
+    Socket connectionSocket; // TCP-Standard-Socketklasse
 
-		int counter = 0; // Z�hlt die erzeugten Bearbeitungs-Threads
+    int counter = 0; // Z�hlt die erzeugten Bearbeitungs-Threads
 
-		try {
-			/* Server-Socket erzeugen */
-			welcomeSocket = new ServerSocket(SERVER_PORT);
+    try {
+      /* Server-Socket erzeugen */
+      welcomeSocket = new ServerSocket(SERVER_PORT);
 
-			while (true) { // Server laufen IMMER
-				System.out.println("Warte auf Verbindungswunsch auf Port "
-						+ SERVER_PORT);
-				/*
-				 * Blockiert auf Verbindungsanfrage warten --> nach
-				 * Verbindungsaufbau Standard-Socket erzeugen und
-				 * connectionSocket zuweisen
-				 */
-				connectionSocket = welcomeSocket.accept();
+      while (true) { // Server laufen IMMER
+        System.out.println("TCP Server: Waiting for connection - listening TCP port " +
+                           SERVER_PORT);
+        /*
+         * Blockiert auf Verbindungsanfrage warten --> nach
+         * Verbindungsaufbau Standard-Socket erzeugen und
+         * connectionSocket zuweisen
+         */
+        connectionSocket = welcomeSocket.accept();
 
-				/* Neuen Arbeits-Thread erzeugen und den Socket �bergeben */
-				(new TCPServerThread(++counter, connectionSocket)).start();
-			}
-		} catch (IOException e) {
-			System.err.println(e.toString());
-		}
-	}
+        /* Neuen Arbeits-Thread erzeugen und den Socket �bergeben */
+        (new TCPServerThread(++counter, connectionSocket)).start();
+      }
+    } catch (IOException e) {
+      System.err.println(e.toString());
+    }
+  }
 }
 
-/* Arbeitsthread, der eine existierende Socket-Verbindung zur Bearbeitung erh�lt */
+
 class TCPServerThread extends Thread {
-	private int name;
-	private Socket socket;
+  /* Arbeitsthread, der eine existierende Socket-Verbindung zur Bearbeitung erh�lt */
+  private int name;
+  private Socket socket;
 
-	public TCPServerThread(int num, Socket sock) {
-		/* Konstruktor */
-		this.name = num;
-		this.socket = sock;
-	}
+  private BufferedReader inFromClient;
+  private DataOutputStream outToClient;
 
-	public void run() {
-		BufferedReader inFromClient;
-		DataOutputStream outToClient;
+  boolean serviceRequested = true; // Arbeitsthread beenden?
 
-		String clientSentence;
-		String capitalizedSentence;
-		boolean serviceRequested = true; // Arbeitsthread beenden?
+  public TCPServerThread(int num, Socket sock) {
+    /* Konstruktor */
+    this.name = num;
+    this.socket = sock;
+  }
 
-		System.out.println("TCP Server Thread " + name
-				+ " is running until QUIT is received!");
+  public void run() {
+    String capitalizedSentence;
 
-		try {
-			/* Socket-Basisstreams durch spezielle Streams filtern */
-			inFromClient = new BufferedReader(new InputStreamReader(
-					socket.getInputStream()));
-			outToClient = new DataOutputStream(socket.getOutputStream());
+    System.out.println("TCP Server Thread " + name +
+                       " is running until QUIT is received!");
 
-			while (serviceRequested) {
-				/* String vom Client empfangen */
-				clientSentence = inFromClient.readLine();
-				System.out.println("TCP Server Thread detected job: "
-						+ clientSentence);
-				capitalizedSentence = clientSentence.toUpperCase() + '\n';
+    try {
+      /* Socket-Basisstreams durch spezielle Streams filtern */
+      inFromClient = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+      outToClient = new DataOutputStream(socket.getOutputStream());
 
-				/* Modifizierten String an Client senden */
-				outToClient.writeBytes(capitalizedSentence);
+      while (serviceRequested) {
+        /* String vom Client empfangen und in Gro�buchstaben umwandeln */
+        capitalizedSentence = readFromClient().toUpperCase();
 
-				/* Test, ob Arbeitsthread beendet werden soll */
-				if (capitalizedSentence.indexOf("QUIT") > -1) {
-					serviceRequested = false;
-				}
-			}
-			/* Socket-Streams schlie�en --> Verbindungsabbau */
-			socket.close();
-		} catch (IOException e) {
-			System.err.println(e.toString());
-			System.exit(1);
-		}
+        /* Modifizierten String an Client senden */
+        writeToClient(capitalizedSentence);
 
-		System.out.println("TCP Server Thread " + name + " stopped!");
-	}
+        /* Test, ob Arbeitsthread beendet werden soll */
+        if (capitalizedSentence.indexOf("QUIT") > -1) {
+          serviceRequested = false;
+        }
+      }
+
+      /* Socket-Streams schlie�en --> Verbindungsabbau */
+      socket.close();
+    } catch (IOException e) {
+      System.err.println(e.toString());
+      System.exit(1);
+    }
+
+    System.out.println("TCP Server Thread " + name + " stopped!");
+  }
+
+  private String readFromClient() {
+    /* Liefere die n�chste Anfrage-Zeile (request) vom Client */
+    String request = "";
+
+    try {
+      request = inFromClient.readLine();
+    } catch (IOException e) {
+      System.err.println("Connection aborted by client!");
+      serviceRequested = false;
+    }
+    System.out.println("TCP Server Thread detected job: " + request);
+    return request;
+  }
+
+  private void writeToClient(String reply) {
+    /* Sende den String als Antwortzeile (mit newline) zum Client */
+    try {
+      outToClient.writeBytes(reply + '\n');
+    } catch (IOException e) {
+      System.err.println(e.toString());
+      serviceRequested = false;
+    }
+    System.out.println("TCP Server Thread " + name +
+                       " has written the message: " + reply);
+  }
 }

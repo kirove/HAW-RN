@@ -1,78 +1,102 @@
 package exampleCode;
 
-import java.io.*;
-import java.net.*;
-import java.util.Scanner;
-
 /*
  * TCPClient.java
  *
- * Version 1.0
+ * Version 2.0
  * Vorlesung Rechnernetze HAW Hamburg
  * Autor: M. H�bner (nach Kurose/Ross)
  * Zweck: TCP-Client Beispielcode:
  *        TCP-Verbindung zum Server aufbauen, einen vom Benutzer eingegebenen
  *        String senden, den String in Gro�buchstaben empfangen und ausgeben
  */
+import java.io.*;
+import java.net.*;
+import java.util.Scanner;
+
 
 public class TCPClient {
+  public static final int SERVER_PORT = 6789;
 
-	public static final int SERVER_PORT = 6789;
+  private Socket clientSocket; // TCP-Standard-Socketklasse
 
-	public static Socket clientSocket;   // TCP-Standard-Socketklasse
+  private DataOutputStream outToServer; // Ausgabestream zum Server
+  private BufferedReader inFromServer;  // Eingabestream vom Server
 
-	/* Client starten. Ende, wenn quit eingegeben wurde */
-	public void startJob() {
-		/* Variablen f�r Ein- Ausgabestreams */
-		Scanner inFromUser;
-		DataOutputStream outToServer;
-		BufferedReader inFromServer;
-		
-		String sentence; // vom User �bergebener String
-		String modifiedSentence; // vom Server modifizierter String
-		boolean serviceRequested = true; // Client beenden?
+  private boolean serviceRequested = true; // Client beenden?
 
-		/* Ab Java 7: try-with-resources mit automat. close benutzen! */
-		try {
-			/* Socket erzeugen --> Verbindungsaufbau mit dem Server */
-			clientSocket = new Socket("localhost", SERVER_PORT);
+  public void startJob() {
+    /* Client starten. Ende, wenn quit eingegeben wurde */
+    Scanner inFromUser;
+    String sentence; // vom User �bergebener String
+    String modifiedSentence; // vom Server modifizierter String
 
-			/* Socket-Basisstreams durch spezielle Streams filtern */
-			outToServer = new DataOutputStream(clientSocket.getOutputStream());
-			inFromServer = new BufferedReader(new InputStreamReader(
-					clientSocket.getInputStream()));
+    /* Ab Java 7: try-with-resources mit automat. close benutzen! */
+    try {
+      /* Socket erzeugen --> Verbindungsaufbau mit dem Server */
+      clientSocket = new Socket("localhost", SERVER_PORT);
 
-			/* Konsolenstream (Standardeingabe) initialisieren */
-			inFromUser = new Scanner(System.in);
+      /* Socket-Basisstreams durch spezielle Streams filtern */
+      outToServer = new DataOutputStream(clientSocket.getOutputStream());
+      inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-			while (serviceRequested) {
-				System.out.println("ENTER TCP-DATA: ");
-				/* String vom Benutzer (Konsoleneingabe) holen */
-				sentence = inFromUser.nextLine();
+      /* Konsolenstream (Standardeingabe) initialisieren */
+      inFromUser = new Scanner(System.in);
 
-				/* String an den Server senden */
-				outToServer.writeBytes(sentence + '\n');
+      while (serviceRequested) {
+        System.out.println("ENTER TCP-DATA: ");
+        /* String vom Benutzer (Konsoleneingabe) holen */
+        sentence = inFromUser.nextLine();
 
-				/* Modifizierten String vom Server empfangen */
-				modifiedSentence = inFromServer.readLine();
-				System.out.println("FROM SERVER: " + modifiedSentence);
+        /* String an den Server senden */
+        writeToServer(sentence);
 
-				/* Test, ob Client beendet werden soll */
-				if (modifiedSentence.indexOf("QUIT") > -1) {
-					serviceRequested = false;
-				}
-			}
-			/* Socket-Streams schlie�en --> Verbindungsabbau */
-			clientSocket.close();
-		} catch (IOException e) {
-			System.err.println(e.toString());
-			System.exit(1);
-		}
-		System.out.println("TCP Client stopped!");
-	}
+        /* Modifizierten String vom Server empfangen */
+        modifiedSentence = readFromServer();
 
-	public static void main(String[] args) {
-		TCPClient myClient = new TCPClient();
-		myClient.startJob();
-	}
+        /* Test, ob Client beendet werden soll */
+        if (modifiedSentence.indexOf("QUIT") > -1) {
+          serviceRequested = false;
+        }
+      }
+
+      /* Socket-Streams schlie�en --> Verbindungsabbau */
+      clientSocket.close();
+    } catch (IOException e) {
+      System.err.println(e.toString());
+      System.exit(1);
+    }
+
+    System.out.println("TCP Client stopped!");
+  }
+
+  private void writeToServer(String request) {
+    /* Sende den request-String als eine Zeile (mit newline) zum Server */
+    try {
+      outToServer.writeBytes(request + '\n');
+    } catch (IOException e) {
+      System.err.println(e.toString());
+      serviceRequested = false;
+    }
+    System.out.println("TCP Client has sent the message: " + request);
+  }
+
+  private String readFromServer() {
+    /* Liefere die Antwort (reply) vom Server */
+    String reply = "";
+
+    try {
+      reply = inFromServer.readLine();
+    } catch (IOException e) {
+      System.err.println("Connection aborted by server!");
+      serviceRequested = false;
+    }
+    System.out.println("TCP Client got from Server: " + reply);
+    return reply;
+  }
+
+  public static void main(String[] args) {
+    TCPClient myClient = new TCPClient();
+    myClient.startJob();
+  }
 }
