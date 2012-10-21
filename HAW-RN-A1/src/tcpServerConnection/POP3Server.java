@@ -222,7 +222,6 @@ public class POP3Server {
             } else {
                 sendERRMessage("Invalid Message ID.");
             }
-            throw new UnsupportedOperationException("Not yet implemented");
         }
 
         private void sendDeleMessage(String clientString) {
@@ -242,7 +241,7 @@ public class POP3Server {
         }
 
         private void sendUidlMessage(String clientString) {
-            if (clientString.length() > 4) {
+            if (clientString.length() < 5) {
                 sendOKMessage("UIDL will be send...");
                 String[] uidls = sMailbox.getAllUIDLs();
                 for (int i = 0; i < uidls.length; i++) {
@@ -268,7 +267,7 @@ public class POP3Server {
         private void sendRsetMessage() {
             System.out.println(">>RSET");
             int count = sMailbox.reset();
-            sendOKMessage("Deletion for " + count + "reseted");
+            sendOKMessage("Deletion for " + count + " Mails reseted");
         }
 
         private void sendStatMessage() {
@@ -276,7 +275,8 @@ public class POP3Server {
         }
 
         private void sendListMessage(String clientString) {
-             if (clientString.length() > 4) {
+            
+             if (clientString.length() < 5) {
                 String[] list = sMailbox.listAllMails();
                 sendOKMessage(list[0]);
                 for (int i = 1; i < list.length; i++) {
@@ -360,7 +360,6 @@ public class POP3Server {
                 sendERRMessage("AUTH and CAPA are not supported. Use USER and PASS to authenticate.");
             } else if (isUserCommand(clientSentence)) {
                 String username = clientSentence.substring(5);
-                System.out.println("'" + username + "' = '" + serversettings.getUser() + "'?");
                 if (username.equals(serversettings.getUser())) {
                     // Korrekter Benutzername
                     sendOKMessage("Are you really " + username + "? Please tell me your password.");

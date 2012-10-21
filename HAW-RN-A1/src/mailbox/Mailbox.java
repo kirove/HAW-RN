@@ -84,7 +84,7 @@ public class Mailbox implements MailboxForPOP3ProxyClients{
         public String[] getAllUIDLs() {
             String[] result = new String[stateMessages.size()-delete.size()];
             for (int i = 0; i < result.length; i++) {
-                if (delete.contains(i)){
+                if (!delete.contains(i)){
                     result[i]= getUIDL(i);
                 }
             }
@@ -96,11 +96,10 @@ public class Mailbox implements MailboxForPOP3ProxyClients{
             int numOfMsgs = stateMessages.size()-delete.size();
             String[] result = new String[numOfMsgs+1];
             int completeSize = 0;
-            
             for (int i = 1; i < result.length; i++) {
-                if (delete.contains(i)){
-                    result[i]= listMail(i);
-                    completeSize += getSize(i);
+                if (!delete.contains(i-1)){
+                    result[i]= listMail(i-1);
+                    completeSize += getSize(i-1);
                 }
             }
             result[0] = numOfMsgs+ " ("+completeSize+" octets)";

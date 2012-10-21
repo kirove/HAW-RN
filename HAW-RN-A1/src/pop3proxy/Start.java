@@ -38,6 +38,9 @@ public class Start {
 //        System.out.println(text.matches(regex));
 //        
 //        
+//        MAILBOX.addMail("BlaBlaFoo\r\n..\r\n");
+//        MAILBOX.addMail("Yihaaadstgswjkvaif\rhajksf\nhsgmrhDGJ:.hdfa\r\n..\r\n");
+//        MAILBOX.addMail("sgjfdhgkhfsgakkljmkutnsukthmaiktha\r\nahfdhfbk\n\n\n\r\n..\r\n");
         POP3Server myPOP3Server = new POP3Server(new ProxyServerSettings(SERVER_PORT, SERVER_USER, SERVER_PASS), MAILBOX);
     //    POP3Client POP3ServerKonto = new POP3Client(new POP3KontenSettings(POP3SERVERADDRESS,POP3SERVER_PORT, POP3SERVER_USER, POP3SERVER_PASS));
         
