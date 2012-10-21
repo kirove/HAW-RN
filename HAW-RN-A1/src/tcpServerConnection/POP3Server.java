@@ -18,7 +18,7 @@ public class POP3Server {
 
     private final ProxyServerSettings serversettings;
     private final Mailbox mailbox;
-    private POP3ServerThread serverThread;
+    //private POP3ServerThread serverThread;
     private ServerSocket welcomeSocket;
     private Socket connectionSocket;     // TCP-Standard-Socketklasse
     private int counter = 0; // Z�hlt die erzeugten Bearbeitungs-Threads
@@ -113,6 +113,7 @@ public class POP3Server {
                     }
 
                 }
+                System.out.println("POP3 Server Thread " +id +": UpdateState:\n");
                 mailbox.update(sMailbox);
                 
                 /* Socket-Streams schlie�en --> Verbindungsabbau */
@@ -179,6 +180,7 @@ public class POP3Server {
         }
 
         private void transaction() {
+            System.out.println("POP3 Server Thread " +id +": TransactionState:\n");
             readFromClient();
             if (isStatCommand(clientSentence)) {
                 sendStatMessage();
@@ -335,7 +337,7 @@ public class POP3Server {
                 System.err.println("Connection aborted by client!");
                 serviceRequested = false;
             }
-            System.out.println("-- POP3 Server Thread detected job: " + request);
+            System.out.println("POP3 Server Thread "+ id + " detected job: " + request);
 
             clientSentence = request;
             return request;
@@ -355,7 +357,7 @@ public class POP3Server {
 
         private void authenticate() {
             readFromClient();
-            System.out.println("POP3 Server Thread starts Authentication:\n");
+            System.out.println("POP3 Server Thread " +id +": AuthenticationState:\n");
             if (isCapaOrAuthCommand(clientSentence)) {
                 sendERRMessage("AUTH and CAPA are not supported. Use USER and PASS to authenticate.");
             } else if (isUserCommand(clientSentence)) {

@@ -4,9 +4,6 @@
  */
 package mailbox;
 
-import java.util.List;
-import java.util.Set;
-
 /**
  *
  * @author Tobi

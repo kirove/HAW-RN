@@ -52,10 +52,12 @@ public class Mailbox implements MailboxForPOP3ProxyClients{
             this.delete= new HashSet<Integer>();
         }
         
+        @Override
         public Set<Integer> getDeletes(){
             return new HashSet<Integer>(delete);
         }
         
+        @Override
         public List<Message> getMessages(){
             return new ArrayList<Message>(stateMessages);
         }
