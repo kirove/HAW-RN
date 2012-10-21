@@ -6,7 +6,9 @@ package tcpServerConnection;
 
 import java.io.*;
 import java.net.*;
-import pop3proxy.ServerSettings;
+import mailbox.Mailbox;
+import mailbox.MailboxForPOP3ProxyServer;
+import pop3proxy.ProxyServerSettings;
 
 /**
  *
@@ -14,7 +16,8 @@ import pop3proxy.ServerSettings;
  */
 public class POP3Server {
 
-    private final ServerSettings serversettings;
+    private final ProxyServerSettings serversettings;
+    private final Mailbox mailbox;
     private POP3ServerThread serverThread;
     private ServerSocket welcomeSocket;
     private Socket connectionSocket;     // TCP-Standard-Socketklasse
@@ -41,8 +44,9 @@ public class POP3Server {
         AUTH, TRANS, UPDATE
     }
 
-    public POP3Server(ServerSettings serversettings) {
+    public POP3Server(ProxyServerSettings serversettings, Mailbox mailbox) {
         this.serversettings = serversettings;
+        this.mailbox = mailbox;
         try {
             /* Server-Socket erzeugen */
             welcomeSocket = new ServerSocket(this.serversettings.getPort());
@@ -74,11 +78,13 @@ public class POP3Server {
         private boolean serviceRequested = true; // Arbeitsthread beenden?
         private STATUS currentState = STATUS.AUTH;
         private String clientSentence = "";
+        private MailboxForPOP3ProxyServer sMailbox;
 
         // Konstruktor
         public POP3ServerThread(int id, Socket sock) {
             this.id = id;
             this.socket = sock;
+            this.sMailbox = mailbox.getMailboxForPOP3ProxyServer();
         }
 
         @Override
@@ -181,11 +187,11 @@ public class POP3Server {
             } else if (isListCommand(clientSentence)) {
                 sendListMessage();
             } else if (isUidlCommand(clientSentence)) {
-                sendUidlMessage();
+                sendUidlMessage(clientSentence);
             } else if (isRetrCommand(clientSentence)) {
                 sendRetrMessage();
             } else if (isDeleCommand(clientSentence)) {
-                sendDeleMessage();
+                sendDeleMessage(clientSentence);
             } else if (isQuitCommand(clientSentence)) {
                 sendQuitAck();
             } else if (isNoopCommand(clientSentence)) {
@@ -202,22 +208,46 @@ public class POP3Server {
             throw new UnsupportedOperationException("Not yet implemented");
         }
 
-        private void sendDeleMessage() {
-            System.out.println(">>DELE");
-            // TODO: Implement Dele command
-            throw new UnsupportedOperationException("Not yet implemented");
+        private void sendDeleMessage(String clientString) {
+            String msgIdS = clientString.substring(5);
+            int msgId = -1;
+            try {
+                msgId = Integer.parseInt(msgIdS);
+            } catch (Exception e) {
+                sendInvalidCommandMessage();
+            }
+            if (sMailbox.validID(msgId)) {
+                sMailbox.delMail(msgId);
+                sendOKMessage("Message marked for deletion.");
+            } else {
+                sendERRMessage("Invalid Message ID.");
+            }
         }
 
-        private void sendUidlMessage() {
-            System.out.println(">>UIDL");
-            // TODO: Implement uidl command
-            throw new UnsupportedOperationException("Not yet implemented");
+        private void sendUidlMessage(String clientString) {
+            if (clientString.length() > 4) {
+                
+            } else {
+                String msgIdS = clientString.substring(5);
+                int msgId = -1;
+                try {
+                    msgId = Integer.parseInt(msgIdS);
+                } catch (Exception e) {
+                    sendInvalidCommandMessage();
+                }
+                if (sMailbox.validID(msgId)) {
+                    sendOKMessage(sMailbox.getUIDL(msgId));
+                } else {
+                    sendERRMessage("Invalid Message ID.");
+                }
+            }
+
         }
 
         private void sendRsetMessage() {
             System.out.println(">>RSET");
-            // TODO: Implement stat command
-            throw new UnsupportedOperationException("Not yet implemented");
+            int count = sMailbox.reset();
+            sendOKMessage("Deletion for " + count + "reseted");
         }
 
         private void sendStatMessage() {
@@ -293,7 +323,7 @@ public class POP3Server {
                 sendERRMessage("AUTH and CAPA are not supported. Use USER and PASS to authenticate.");
             } else if (isUserCommand(clientSentence)) {
                 String username = clientSentence.substring(5);
-                System.out.println("'"+username+"' = '"+serversettings.getUser()+"'?");
+                System.out.println("'" + username + "' = '" + serversettings.getUser() + "'?");
                 if (username.equals(serversettings.getUser())) {
                     // Korrekter Benutzername
                     sendOKMessage("Are you really " + username + "? Please tell me your password.");

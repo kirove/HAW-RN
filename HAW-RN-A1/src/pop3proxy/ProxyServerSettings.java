@@ -11,13 +11,13 @@ import java.net.*;
  *
  * @author Tobi
  */
-public class ServerSettings {
+public class ProxyServerSettings {
     
     private int port;
     private String user;
     private String pass;
 
-    public ServerSettings(int port, String user, String pass) {
+    public ProxyServerSettings(int port, String user, String pass) {
         this.port = port;
         this.user = user;
         this.pass = pass;
@@ -57,7 +57,7 @@ public class ServerSettings {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final ServerSettings other = (ServerSettings) obj;
+        final ProxyServerSettings other = (ProxyServerSettings) obj;
         if (this.port != other.port) {
             return false;
         }

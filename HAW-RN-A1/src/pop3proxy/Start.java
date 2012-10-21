@@ -1,6 +1,7 @@
 package pop3proxy;
 
 import java.io.IOException;
+import mailbox.Mailbox;
 import tcpServerConnection.POP3Server;
 
 /*
@@ -15,7 +16,8 @@ import tcpServerConnection.POP3Server;
 public class Start {
 
     // common  settings
-    public static final String MAIL_CACHE = "mailCache/";
+    public static final mailbox.Mailbox MAILBOX = new Mailbox();
+    //public static final String MAIL_CACHE = "mailCache/";
     
     // server settings
     public static final int SERVER_PORT = 11000;
@@ -36,7 +38,7 @@ public class Start {
 //        System.out.println(text.matches(regex));
 //        
 //        
-        POP3Server myPOP3Server = new POP3Server(new ServerSettings(SERVER_PORT, SERVER_USER, SERVER_PASS));
+        POP3Server myPOP3Server = new POP3Server(new ProxyServerSettings(SERVER_PORT, SERVER_USER, SERVER_PASS), MAILBOX);
     //    POP3Client POP3ServerKonto = new POP3Client(new POP3KontenSettings(POP3SERVERADDRESS,POP3SERVER_PORT, POP3SERVER_USER, POP3SERVER_PASS));
         
     }
