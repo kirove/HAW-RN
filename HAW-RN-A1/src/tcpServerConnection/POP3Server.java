@@ -113,9 +113,9 @@ public class POP3Server {
                     }
 
                 }
+                mailbox.update(sMailbox);
+                
                 /* Socket-Streams schlie�en --> Verbindungsabbau */
-
-                //ToDo: E-Mails löschen
                 socket.close();
             } catch (IOException e) {
                 System.err.println(e.toString());
@@ -185,11 +185,11 @@ public class POP3Server {
             } else if (isRsetCommand(clientSentence)) {
                 sendRsetMessage();
             } else if (isListCommand(clientSentence)) {
-                sendListMessage();
+                sendListMessage(clientSentence);
             } else if (isUidlCommand(clientSentence)) {
                 sendUidlMessage(clientSentence);
             } else if (isRetrCommand(clientSentence)) {
-                sendRetrMessage();
+                sendRetrMessage(clientSentence);
             } else if (isDeleCommand(clientSentence)) {
                 sendDeleMessage(clientSentence);
             } else if (isQuitCommand(clientSentence)) {
@@ -202,9 +202,26 @@ public class POP3Server {
 
         }
 
-        private void sendRetrMessage() {
+        private void sendRetrMessage(String clientString) {
             System.out.println(">>RETR");
-            // TODO: Implement retr command
+            String msgIdS = clientString.substring(5);
+            int msgId = -1;
+            try {
+                msgId = Integer.parseInt(msgIdS);
+            } catch (Exception e) {
+                sendInvalidCommandMessage();
+            }
+            if (sMailbox.validID(msgId)) {
+                String msgContent = sMailbox.getMail(msgId);
+                sendOKMessage(msgId+" "+sMailbox.getSize(msgId)+"octets");
+                String[] lines = msgContent.split("\n");
+                for (String currentLine : lines) {
+                    writeToClient(currentLine+"\n");
+                }
+                writeToClient("."+CRNL);
+            } else {
+                sendERRMessage("Invalid Message ID.");
+            }
             throw new UnsupportedOperationException("Not yet implemented");
         }
 
@@ -226,7 +243,12 @@ public class POP3Server {
 
         private void sendUidlMessage(String clientString) {
             if (clientString.length() > 4) {
-                
+                sendOKMessage("UIDL will be send...");
+                String[] uidls = sMailbox.getAllUIDLs();
+                for (int i = 0; i < uidls.length; i++) {
+                    writeToClient(uidls[i]+CRNL);
+                }
+                writeToClient("."+CRNL);
             } else {
                 String msgIdS = clientString.substring(5);
                 int msgId = -1;
@@ -241,7 +263,6 @@ public class POP3Server {
                     sendERRMessage("Invalid Message ID.");
                 }
             }
-
         }
 
         private void sendRsetMessage() {
@@ -251,15 +272,31 @@ public class POP3Server {
         }
 
         private void sendStatMessage() {
-            System.out.println(">>STAT");
-            // TODO: Implement stat command
-            throw new UnsupportedOperationException("Not yet implemented");
+            sendOKMessage(sMailbox.state());
         }
 
-        private void sendListMessage() {
-            System.out.println(">>LIST");
-            // TODO: Implement list command
-            throw new UnsupportedOperationException("Not yet implemented");
+        private void sendListMessage(String clientString) {
+             if (clientString.length() > 4) {
+                String[] list = sMailbox.listAllMails();
+                sendOKMessage(list[0]);
+                for (int i = 1; i < list.length; i++) {
+                    writeToClient(list[i]+CRNL);
+                }
+                writeToClient("."+CRNL);
+            } else {
+                String msgIdS = clientString.substring(5);
+                int msgId = -1;
+                try {
+                    msgId = Integer.parseInt(msgIdS);
+                } catch (Exception e) {
+                    sendInvalidCommandMessage();
+                }
+                if (sMailbox.validID(msgId)) {
+                    sendOKMessage(sMailbox.listMail(msgId));
+                } else {
+                    sendERRMessage("Invalid Message ID.");
+                }
+            }
         }
 
         private void sendQuitAck() {

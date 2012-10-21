@@ -15,7 +15,8 @@ public interface MailboxForPOP3ProxyServer{
     
     String getUIDL(int messageID);
     String[] getAllUIDLs();
-    String getSize(int messageID);
+    String getSizeString(int messageID);
+    int getSize(int messageID);
     void delMail(int messageID);
     String getMail(int messageID);
     String[] listAllMails();

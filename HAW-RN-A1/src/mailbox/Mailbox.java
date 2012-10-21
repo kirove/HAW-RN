@@ -66,8 +66,8 @@ public class Mailbox implements MailboxForPOP3ProxyClients{
         }
 
         @Override
-        public String getSize(int messageID) {
-            return messageID+" "+stateMessages.get(messageID).getSize();
+        public String getSizeString(int messageID) {
+            return messageID+" "+getSize(messageID);
         }
 
         @Override
@@ -93,12 +93,17 @@ public class Mailbox implements MailboxForPOP3ProxyClients{
 
         @Override
         public String[] listAllMails() {
-            String[] result = new String[stateMessages.size()-delete.size()];
-            for (int i = 0; i < result.length; i++) {
+            int numOfMsgs = stateMessages.size()-delete.size();
+            String[] result = new String[numOfMsgs+1];
+            int completeSize = 0;
+            
+            for (int i = 1; i < result.length; i++) {
                 if (delete.contains(i)){
                     result[i]= listMail(i);
+                    completeSize += getSize(i);
                 }
             }
+            result[0] = numOfMsgs+ " ("+completeSize+" octets)";
             return result;
         }
 
@@ -128,6 +133,11 @@ public class Mailbox implements MailboxForPOP3ProxyClients{
             return (msgId<stateMessages.size() &&
                     msgId>=0 &&
                     !delete.contains(msgId))? true : false;
+        }
+
+        @Override
+        public int getSize(int messageID) {
+            return stateMessages.get(messageID).getSize();
         }
 
 
