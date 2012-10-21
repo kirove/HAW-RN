@@ -1,8 +1,6 @@
 package pop3proxy;
 
 import java.io.IOException;
-import tcpClientConnection.POP3Client;
-import tcpClientConnection.TCPSocket;
 import tcpServerConnection.POP3Server;
 
 /*
@@ -21,8 +19,8 @@ public class Start {
     
     // server settings
     public static final int SERVER_PORT = 11000;
-    public static final String SERVER_USER = "collectot";
-    public static final String SERVER_PASS = "password";
+    public static final String SERVER_USER = "myUser";
+    public static final String SERVER_PASS = "pass123";
     
     // POP3server settings
     public static final String POP3SERVERADDRESS = "pop.gmx.de";
@@ -38,8 +36,8 @@ public class Start {
 //        System.out.println(text.matches(regex));
 //        
 //        
-    //    POP3Server myPOP3Server = new POP3Server(new ServerSettings(SERVER_PORT, MAIL_CACHE, MAIL_CACHE));
-        POP3Client POP3ServerKonto = new POP3Client(new POP3KontenSettings(POP3SERVERADDRESS,POP3SERVER_PORT, POP3SERVER_USER, POP3SERVER_PASS));
+        POP3Server myPOP3Server = new POP3Server(new ServerSettings(SERVER_PORT, SERVER_USER, SERVER_PASS));
+    //    POP3Client POP3ServerKonto = new POP3Client(new POP3KontenSettings(POP3SERVERADDRESS,POP3SERVER_PORT, POP3SERVER_USER, POP3SERVER_PASS));
         
     }
 }
